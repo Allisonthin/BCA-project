@@ -1,43 +1,44 @@
-from lib2to3.pygram import python_symbols
-from math import fabs
-from pickle import TRUE
-from turtle import tilt
-from unicodedata import is_normalized
 
 import arcade
 import os
+
+from run import LAYER_NAME_BACKGROUND
+
+
 
 
 
 #screen size
 width = 1080
-height =900
+height =800
 title ="platformer"
 
 #constants used to scale 
-TILE_SCALING = 0.5
-CHARACTER_SCALING = TILE_SCALING* 2
+TILE_SCALING = 1
+CHARACTER_SCALING = 0.2
 COIN_SCALING = TILE_SCALING
-SPRITE_PIXEL_SIZE = 128
+SPRITE_PIXEL_SIZE = 64
 GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
 #layers
-LAYER_NAME_PLATFORMS = "plat"
-LAYER_NAME_MOVING_PLATFORMS = "back"
+LAYER_NAME_PLATFORMS = "platform"
+# LAYER_NAME_MOVING_PLATFORMS = "moving object"
+LAYER_NAME_BACKGROUND="bgcolor"
 
 LAYER_NAME_PLAYER = "player"
+# LAYER_NAME_ENEMY =""
 
 #character direction
 right_face = 0
 left_face = 1
 
 #character movement speed
-movement_speed = 10
+movement_speed = 15
 jump_speed = 30
 gravity = 1
 
-player_start_x = SPRITE_PIXEL_SIZE * TILE_SCALING *2
-player_start_y = SPRITE_PIXEL_SIZE * TILE_SCALING *1
+player_start_x = 100 
+player_start_y = 500 
 
 #loading texture
 def load_texture_pair(filename):
@@ -46,8 +47,8 @@ def load_texture_pair(filename):
 
 
 
-class PLAYER(arcade.sprite):
-    def __init__(self):
+class Entity(arcade.Sprite):
+    def __init__(self, folder_name, file_name):
         super().__init__()
 
         #default face direction
@@ -56,38 +57,54 @@ class PLAYER(arcade.sprite):
         #used for flipping between images
         self.cur_texture = 0
         self.scale = CHARACTER_SCALING
+        self.character_face_direction = right_face
 
-        #tracking our current state
-        self.jumping = False
-        self.climbing = False
-        self.is_on_ladder = False
+        
 
         #path of the image sequence
-        main_path = "" 
+        main_path = f"{folder_name}/{file_name}/" 
 
         #load texture for idle standing
-        self.idle_texture_pair = load_texture_pair(f"{main_path}_idle.png ")
-        self.jump_texture_pair = load_texture_pair(f"{main_path}_jump.png")
-        self.fall_texture_pair = load_texture_pair(f"{main_path}_fall.png")
+        self.idle_texture_pair = load_texture_pair(f"{main_path}idle.png ")
+        self.jump_texture_pair = load_texture_pair(f"{main_path}jump0.png")
+        self.fall_texture_pair = load_texture_pair(f"{main_path}jmp1.png")
 
         # load texture for walking
         self.walking_textures = []
-        for i in range(2):
-            texture = load_texture_pair(f"{main_path}_walk{i}.png")
+        for i in range(1,4):
+            texture = load_texture_pair(f"{main_path}run {i}.png")
             self.walking_textures.append(texture)
 
         # load texture for climbing
-        self.climbing_texture = []
-        texture = arcade.load_texture(f"{main_path}_climb1.png")
-        self.climbing_texture.append(texture)
-        texture = arcade.load_texture(f"{main_path}_climb2.png")
-        self.climbing_texture.append(texture)
+        # self.climbing_texture = []
+        # texture = arcade.load_texture(f"{main_path}_climb1.png")
+        # self.climbing_texture.append(texture)
+        # texture = arcade.load_texture(f"{main_path}_climb2.png")
+        # self.climbing_texture.append(texture)
 
         #set the initial texture
         self.texture = self.idle_texture_pair[0]
 
         #setting hit box algorithm
         self.hit_box = self.texture.hit_box_points
+
+
+class Enemy(Entity):
+    def __init__(self,folder_name, file_name):
+        super().__init__(folder_name, file_name)
+
+
+class Animal(Enemy):
+    def __init__(self):
+        super().__init__("","")
+
+
+class Player(Entity):
+    def __init__(self):
+        super().__init__("image","character")
+
+        #track our current state
+        self.jumping  = False
 
     def update_animation(self, delta_time: float = 1/60):
 
@@ -100,33 +117,33 @@ class PLAYER(arcade.sprite):
 
 
         #climbing animation
-        if self.is_on_ladder:
-            self.climbing = TRUE
+        # if self.is_on_ladder:
+        #     self.climbing = True
 
-        if not self.is_on_ladder and self.climbing:
-            self.climbing = False
+        # if not self.is_on_ladder and self.climbing:
+        #     self.climbing = False
 
-        if self.climbing and abs(self.change_y) > 1:
-            self.cur_texture += 1
-            if self.cur_texture > 7:
-                self.cur_texture = 0
+        # if self.climbing and abs(self.change_y) > 1:
+        #     self.cur_texture += 1
+        #     if self.cur_texture > 7:
+        #         self.cur_texture = 0
 
-        if self.climbing:
-            self.texture = self.climbing_texture[self.cur_texture//4]
-            return
+        # if self.climbing:
+        #     self.texture = self.climbing_texture[self.cur_texture//4]
+        #     return
 
         # jumping animation
-        if self.change_y > 0 and not self.is_on_ladder:
+        if self.change_y > 0:
             self.texture= self.jump_texture_pair[self.player_face_direction]
             return
-        elif self.change_y < 0 and not self.is_on_ladder:
+        elif self.change_y < 0:
             self.texture = self.jump_texture_pair[self.player_face_direction]
             return
 
         #walking animation
         self.cur_texture += 1
-        if self.cur_texture > 7:
-            self.cur_texture = 0
+        if self.cur_texture > 1:
+            self.cur_texture = 1
         self.texture = self.walking_textures[self.cur_texture][self.player_face_direction]
         
 
@@ -167,6 +184,9 @@ class MYGAME(arcade.Window):
         # a player camera
         self.camera = None
 
+        #set background
+        # arcade.set_background_color(arcade.color.AERO_BLUE)
+
         # GUI  camera
         self.gui_camera = None
 
@@ -186,17 +206,18 @@ class MYGAME(arcade.Window):
         self.camera = arcade.Camera(self.width, self.height)
         self.gui_camera = arcade.Camera(self.width, self.height)
 
+        
         # map path
-        map_name = ""
+        map_name = "layer/map/Map.tmx"
 
         #layer specifying options for the tilemap
         layer_options = {
             LAYER_NAME_PLATFORMS:{
                 "use_spatial_hash": True,
             },
-            LAYER_NAME_MOVING_PLATFORMS:{
-                "use_spatial_hash": False,
-            },
+            # LAYER_NAME_MOVING_PLATFORMS:{
+            #     "use_spatial_hash": False,
+            # },
         }
 
         # load in tilemap
@@ -208,7 +229,7 @@ class MYGAME(arcade.Window):
 
 
         # setting up the player, specifically placing it at these coordinate
-        self.player_sprite = PLAYER()
+        self.player_sprite = Player()
         self.player_sprite.center_x = player_start_x
         self.player_sprite.center_y = player_start_y
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player_sprite)
@@ -216,14 +237,20 @@ class MYGAME(arcade.Window):
         # calculating the  right edge of the map in pixels
         self.end_map = self.tile_map.width * GRID_PIXEL_SIZE
 
+
+        # enemy position and state
+        # enemy_layer = self.tile_map.object_lists[LAYER_NAME_ENEMY]
+
+        
+
         #set the background color 
         if self.tile_map.background_color:
-            arcade.set_background_color(self.tile_map.background_color)
+            arcade.set_background_color(self.tile_map.background_color[layer])
 
         # create the physics  engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
             self.player_sprite,
-            platforms = self.scene[LAYER_NAME_MOVING_PLATFORMS],
+            # platforms = self.scene[LAYER_NAME_MOVING_PLATFORMS],
             gravity_constant=gravity,
             walls= self.scene[LAYER_NAME_PLATFORMS]
         )
@@ -235,6 +262,7 @@ class MYGAME(arcade.Window):
         self.clear()
 
         # Activating our camera 
+        self.camera.use()
         # draw our scene
         self.scene.draw()
 
@@ -246,22 +274,22 @@ class MYGAME(arcade.Window):
 
         # process up/down
         if self.up_pressed and not self.down_pressed:
-            if self.physics_engine.is_on_ladder():
-                self.player_sprite.change_y = movement_speed
-            elif self.physics_engine.can_jump(y_distance=10) and not self.jump_reset:
+            # if self.physics_engine.is_on_ladder():
+            #     self.player_sprite.change_y = movement_speed
+            if self.physics_engine.can_jump(y_distance=10) and not self.jump_reset:
                 self.player_sprite.change_y = jump_speed
                 self.jump_reset = True
 
-        elif self.down_pressed and not self.up_pressed:
-            if self.physics_engine.is_on_ladder():
-                self.player_sprite.change_y = -movement_speed
+        # elif self.down_pressed and not self.up_pressed:
+        #     if self.physics_engine.is_on_ladder():
+        #         self.player_sprite.change_y = -movement_speed
 
         # process up/down on a ladder or no movement
-        if self.physics_engine.is_on_ladder():
-            if not self.up_pressed and not self.down_pressed:
-                self.player_sprite.change_y =0
-            elif self.up_pressed and self.down_pressed:
-                self.player_sprite.change_y =0
+        # if self.physics_engine.is_on_ladder():
+        #     if not self.up_pressed and not self.down_pressed:
+        #         self.player_sprite.change_y =0
+        #     elif self.up_pressed and self.down_pressed:
+        #         self.player_sprite.change_y =0
 
         # process left/right
         if self.right_pressed and not self.left_pressed:
@@ -295,6 +323,8 @@ class MYGAME(arcade.Window):
         elif key == arcade.key.RIGHT or key == arcade.key.F:
             self.right_pressed = False
 
+        self.process_keychange()
+
     def center_camera_to_player(self):
         screen_x = self.player_sprite.center_x - (self.camera.viewport_width / 2)
         screen_y = self.player_sprite.center_y - (self.camera.viewport_height / 2)
@@ -319,17 +349,33 @@ class MYGAME(arcade.Window):
         else:
             self.player_sprite.can_jump = True
             
-        if self.physics_engine.is_on_ladder() and not self.physics_engine.can_jump():
-            self.player_sprite.is_on_ladder = True
-            self.process_keychange()
+        # if self.physics_engine.is_on_ladder() and not self.physics_engine.can_jump():
+        #     self.player_sprite.is_on_ladder = True
+        #     self.process_keychange()
 
-        else:
-            self.player_sprite.is_on_ladder = False
-            self.process_keychange()
+        # else:
+        #     self.player_sprite.is_on_ladder = False
+        #     self.process_keychange()
 
         #update Animations
-        self.scene.update_animation
+        self.scene.update_animation(
+            delta_time, [LAYER_NAME_PLAYER]
+        )
 
+        # # update walls, used with moving  platforms
+        # self.scene.update([LAYER_NAME_MOVING_PLATFORMS])
+
+        # position the camera
+        self.center_camera_to_player()
+
+def main():
+    """Main Function"""
+    wind = MYGAME()
+    wind.setup()
+    arcade.run()
+
+if __name__ == "__main__":
+    main()
         
 
 

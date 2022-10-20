@@ -60,7 +60,7 @@ class a(arcade.Window):
         self.gui_camera = arcade.Camera(self.width, self.height)
         
 
-        map_name = f"layer/untitled_1.tmj"
+        map_name = f"layer/untitled_{self.level}.tmj"
 
         
 
@@ -77,6 +77,7 @@ class a(arcade.Window):
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
 
+
         # self.scene.add_sprite_list_after("players", LAYER_NAME_FOREGROUND)
 
 
@@ -86,7 +87,7 @@ class a(arcade.Window):
 
         
 
-        self.player = arcade.Sprite("image/soldier.png", 0.1)
+        self.player = arcade.Sprite("image/sol.png", 0.1)
 
         self.player.center_x = self.px
         self.player.center_y = self.py
@@ -127,11 +128,12 @@ class a(arcade.Window):
         if self.tile_map.background_color : 
             arcade.set_background_color(self.tile_map.background_color)
 
-        self.physics_engine = arcade.PhysicsEnginePlatformer(self.player,platforms=self.scene[LAYER_NAME_PLATFORMS],
-            gravity_constant=gravity,
+        self.physics_engine = arcade.PhysicsEnginePlatformer(
+            self.player,
+            platforms=self.scene[LAYER_NAME_MOVING_PLATFORMS],
+            gravity_constant = gravity,
             # ladders=self.scene[LAYER_NAME_LADDERS],
-            walls=self.scene[LAYER_NAME_MOVING_PLATFORMS]
-
+            walls=self.scene[LAYER_NAME_PLATFORMS],
         )
 
 
@@ -197,18 +199,18 @@ class a(arcade.Window):
             self.player.center_x = self.px
             self.player.center_y = self.py
 
-        # if self.player.center_x >= self.end_map:
+        if self.player.center_x >= self.end_map:
 
-        #     self.level += 1
+            self.level += 1
 
-        #     self.setup()
+            self.setup()
 
-        #     self.player.center_x = self.px
-        #     self.player.center_y = self.py
+            self.player.center_x = self.px
+            self.player.center_y = self.py
 
-        self.scene.update_animation(delta_time)
+        # self.scene.update_animation(delta_time)
 
-        self.scene.update([LAYER_NAME_MOVING_PLATFORMS])
+        # self.scene.update([LAYER_NAME_MOVING_PLATFORMS])
 
     
         self.center_camera_to_player()

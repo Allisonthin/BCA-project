@@ -1,12 +1,8 @@
-import arcade
+a = True
+b = False
 
-class a(arcade.Window):
-    def __init__(self,width, height):
-        super().__init__(width, height, fullscreen= True, resizable= True)
+if  a and not b:
+    print(a ,"and ", b)
 
-def main():
-
-    win = a(600,300)
-    arcade.run()
-
-main()
+c = not b
+print(c)

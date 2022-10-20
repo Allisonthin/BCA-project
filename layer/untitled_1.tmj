@@ -79,23 +79,23 @@
                         {
                          "name":"boundary_buttom",
                          "type":"float",
-                         "value":50
+                         "value":100
                         }, 
                         {
                          "name":"boundary_top",
                          "type":"float",
-                         "value":60
+                         "value":500
                         }, 
                         {
                          "name":"change_x",
                          "type":"float",
                          "value":1
                         }],
-                 "rotation":0,
+                 "rotation":358.298797391886,
                  "visible":true,
                  "width":92,
-                 "x":1237.33333333333,
-                 "y":388
+                 "x":9.84539350809951,
+                 "y":127.239535769062
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -104,7 +104,7 @@
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":10,
+ "nextobjectid":14,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.9.2",

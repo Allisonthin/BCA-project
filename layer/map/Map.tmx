@@ -7,7 +7,7 @@
   <image source="../../../../tiled set/Tiles/Assets/Background_2.png" trans="ff00ff" width="496" height="272"/>
  </tileset>
  <tileset firstgid="265" name="bgcolor" tilewidth="1" tileheight="1" tilecount="0" columns="0"/>
- <imagelayer id="2" name="bgcolor" offsetx="4" offsety="0" repeatx="1" repeaty="1">
+ <imagelayer id="2" name="bgcolor" offsetx="10" offsety="10" repeatx="1" repeaty="1">
   <image source="../../../../tiled set/Tiles/Assets/Background_2.png" width="496" height="272"/>
  </imagelayer>
  <layer id="1" name="platform" width="400" height="40">

@@ -2,7 +2,8 @@
 import arcade
 import os
 
-from run import LAYER_NAME_BACKGROUND
+
+
 
 
 
@@ -20,6 +21,12 @@ COIN_SCALING = TILE_SCALING
 SPRITE_PIXEL_SIZE = 64
 GRID_PIXEL_SIZE = SPRITE_PIXEL_SIZE * TILE_SCALING
 
+# shooting constants
+SPRITE_SCALING_LASER = 0.4
+SHOOT_SPEED = 15
+BULLET_SPEED = 35
+BULLET_DAMAGE = 25
+
 #layers
 LAYER_NAME_PLATFORMS = "platform"
 # LAYER_NAME_MOVING_PLATFORMS = "moving object"
@@ -27,13 +34,14 @@ LAYER_NAME_BACKGROUND="bgcolor"
 
 LAYER_NAME_PLAYER = "player"
 # LAYER_NAME_ENEMY =""
+LAYER_NAME_BULLETS = "bullets"
 
 #character direction
 right_face = 0
 left_face = 1
 
 #character movement speed
-movement_speed = 15
+movement_speed = 12
 jump_speed = 30
 gravity = 1
 
@@ -168,6 +176,7 @@ class MYGAME(arcade.Window):
         self.up_pressed = False
         self.down_pressed = False
         self.jump_reset = False
+        self.shoot_press = False
 
         #our tilemap object
         self.tile_map = None
@@ -194,6 +203,13 @@ class MYGAME(arcade.Window):
 
         # keep track of the score
         self.score = 0
+
+        #shooting mechanism
+        self.can_shoot = False
+        self.shoot_timer = 0
+
+        # bullet texture
+        # self.bullet_texture_pair = none
 
         # load sounds
 
@@ -227,7 +243,8 @@ class MYGAME(arcade.Window):
         #initialize new scene with our tilemap
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
 
-
+        self.can_shoot = True
+        self.shoot_timer = 0
         # setting up the player, specifically placing it at these coordinate
         self.player_sprite = Player()
         self.player_sprite.center_x = player_start_x
@@ -241,11 +258,11 @@ class MYGAME(arcade.Window):
         # enemy position and state
         # enemy_layer = self.tile_map.object_lists[LAYER_NAME_ENEMY]
 
-        
+        self.scene.add_sprite_list(LAYER_NAME_BULLETS)
 
         #set the background color 
         if self.tile_map.background_color:
-            arcade.set_background_color(self.tile_map.background_color[layer])
+            arcade.set_background_color(self.tile_map.background_color)
 
         # create the physics  engine
         self.physics_engine = arcade.PhysicsEnginePlatformer(
@@ -299,6 +316,16 @@ class MYGAME(arcade.Window):
         else:
             self.player_sprite.change_x = 0
 
+    def on_mouse_press(self,x,y, key, modifiers):
+
+        if key == arcade.MOUSE_BUTTON_LEFT:
+
+            self.shoot_press = True
+
+    def on_mouse_release(self, x ,y , key, modifiers):
+        if key == arcade.MOUSE_BUTTON_LEFT:
+            self.shoot_press = False
+
     
     def on_key_press(self, key, modifiers):
         if key == arcade.key.UP or key == arcade.key.E:
@@ -348,6 +375,34 @@ class MYGAME(arcade.Window):
 
         else:
             self.player_sprite.can_jump = True
+
+            
+
+        if self.can_shoot:
+            if self.shoot_press:
+                bullet = arcade.Sprite("image/[removal.ai]_tmp-63511f616034b.png",SPRITE_SCALING_LASER,)
+                bullet_texture = load_texture_pair()
+                
+                if self.player_sprite.player_face_direction == right_face:
+                    bullet.change_x = BULLET_SPEED
+                elif self.player_sprite.player_face_direction== left_face:
+                    bullet.change_x = -BULLET_SPEED
+
+                
+
+                bullet.center_x = self.player_sprite.center_x
+                bullet.center_y = self.player_sprite.center_y
+
+                self.scene.add_sprite(LAYER_NAME_BULLETS, bullet)
+
+                self.can_shoot = False
+            
+        else:
+            self.shoot_timer +=1
+            if self.shoot_timer == 5:
+                self.can_shoot = True
+                self.shoot_timer = 0
+
             
         # if self.physics_engine.is_on_ladder() and not self.physics_engine.can_jump():
         #     self.player_sprite.is_on_ladder = True
@@ -359,11 +414,15 @@ class MYGAME(arcade.Window):
 
         #update Animations
         self.scene.update_animation(
-            delta_time, [LAYER_NAME_PLAYER]
+            delta_time,
+             [
+                LAYER_NAME_PLAYER,
+                LAYER_NAME_BACKGROUND,
+                ],
         )
 
         # # update walls, used with moving  platforms
-        # self.scene.update([LAYER_NAME_MOVING_PLATFORMS])
+        self.scene.update([LAYER_NAME_BULLETS])
 
         # position the camera
         self.center_camera_to_player()
